@@ -1,0 +1,80 @@
+/* ====== TOC lateral en bloque oscuro ====== */
+#TOC {
+  background: #0d2f4a;   /* Azul oscuro */
+  color: #ffffff;        /* Texto blanco */
+  padding: 15px;
+}
+
+#TOC a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+#TOC a:hover {
+  color: #999999;        /* Gris oscuro al pasar el mouse */
+  font-weight: 600;
+}
+
+/* ====== Texto principal ====== */
+body {
+  background: #ffffff;     /* Fondo blanco */
+  color: #212529;          /* Texto gris oscuro */
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* ====== Párrafos ====== */
+p {
+  color: #2c2c2c;          /* Gris más marcado */
+  font-size: 1.05em;
+  margin-bottom: 1em;
+}
+
+/* ====== Títulos ====== */
+h1 {
+  color: #113f67;          /* Azul corporativo */
+  border-bottom: 3px solid #113f67;
+  padding-bottom: 8px;
+  font-weight: 700;
+}
+
+h2 {
+  color: #333333;          /* Gris oscuro sobrio */
+  border-left: 4px solid #333333;
+  padding-left: 8px;
+  margin-top: 25px;
+}
+
+h3 {
+  color: #555555;          /* Gris intermedio */
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* ====== Conceptos clave ====== */
+strong {
+  color: #113f67;          /* Azul para destacar negrita */
+  font-weight: 700;
+}
+
+em {
+  color: #555555;          /* Gris suave para cursiva */
+}
+
+/* ====== Bloque destacado (ej. Concepto principal) ====== */
+.highlight-box {
+  background: #f8f9fa;        /* Gris claro */
+  border: 2px solid #333333;  /* Gris oscuro */
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  color: #212529;             /* Texto gris oscuro */
+}
+
+.highlight-box h2 {
+  color: #113f67;             /* Azul corporativo para el título */
+  margin-top: 0;
+}
+

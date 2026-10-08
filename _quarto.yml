@@ -1,0 +1,18 @@
+project:
+  type: website
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    toc-title: "Contenido"
+    toc-style: "docked"
+    number-sections: false
+    embed-resources: true
+    fig-align: center
+    code-fold: show
+    code-tools: true
+    code-summary: "Ver código"
+    css: styles.css
