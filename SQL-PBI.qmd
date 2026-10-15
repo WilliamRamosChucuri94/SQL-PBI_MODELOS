@@ -133,7 +133,7 @@ reales.
     web sería inviable y peligrosamente lento.
 
 | **Característica** | **Archivos CSV + Python/Excel** | **Base de datos SQL** |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | **Ideal para...** | Análisis de datos, reportes específicos, Ciencia de Datos | Aplicaciones web, sistemas de inventario, registrar transacciones |
 | **Volumen de datos** | Limitado por la memoria RAM | Prácticamente ilimitado (Terabytes en disco) |
 | **Acceso** | Un solo usuario o proceso a la vez | Miles de usuarios simultáneos |
@@ -501,7 +501,7 @@ CREATE DATABASE bi_seguros;
 ### Comparación de enfoques
 
 | Enfoque | Ventajas | Desventajas |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | **Un solo esquema con todas las tablas** | Simplicidad inicial, menos configuración | Se vuelve caótico en bases grandes, difícil de dar permisos granulares |
 | **Varios esquemas por área de negocio (cartera, depósitos, balances)** | Organización clara, seguridad por área, facilita auditoría | Puede haber redundancia si no se define bien la relación entre áreas |
 | **Varios esquemas por capa (staging, dw, kpi)** | Orden en el flujo de datos, separación técnica, facilita BI | Requiere disciplina en ETL y gobernanza |
@@ -776,7 +776,7 @@ Toda pregunta de negocio tiene dos partes:
 Veamos con nuestra base..
 
 | **Columna** | **¿Se suma o se filtra?** | **Va a…** |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | valor_vida, valor_general, valor_total |  | Medidas del hecho |
 | cod_institucion, institucion, tipo_institucion |  |  |
 | cod_cuenta, descripcion_cuenta |  |  |
@@ -1696,7 +1696,7 @@ WHERE f.tiempo_key = 202608;
 **¿Qué hace cada instrucción?**
 
 | Instrucción | Explicación |
-|----|----|
+|------------------------------------|------------------------------------|
 | `SELECT` | Selecciona las columnas que queremos visualizar. |
 | `i.institucion` | Obtiene el nombre de la institución. |
 | `f.valor_total` | Obtiene el valor financiero de la tabla de hechos. |
@@ -1724,9 +1724,554 @@ Al ejecutar el `JOIN` junto con el `WHERE`, obtenemos:
 | Seguros ABC | 6000        |
 | Seguros XYZ | 8000        |
 
-### 4.2 Subconsultas
+**Dos Inner Join y Where**
+
+``` sql
+SELECT i.institucion,
+       c.descripcion,
+       f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+JOIN dw.dim_cuenta c      ON f.cuenta_key      = c.cuenta_key
+WHERE f.tiempo_key = 202608;
+```
+
+-   El primer `JOIN` responde: ¿a qué institución corresponde el valor?
+
+-   El segundo `JOIN` responde: ¿a qué cuenta contable corresponde ese
+    valor?
+
+-   El `WHERE` responde: ¿de qué período queremos consultar los datos?
+
+![](images/clipboard-330461286.png)
+
+En nuestro Data Warehouse no necesitamos repetir permanentemente el
+nombre de la institución ni la descripción de las cuentas en la tabla de
+hechos.
+
+En lugar de ello, utilizamos claves que relacionan las tablas. Esto
+facilita el análisis multidimensional.
+
+**Podemos ponerle nombres a las columnas de la consulta con AS**
+
+``` sql
+SELECT i.institucion As nombre_institucion,
+       c.descripcion AS cuenta,
+       f.valor_total as suma_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+JOIN dw.dim_cuenta c      ON f.cuenta_key      = c.cuenta_key
+WHERE f.tiempo_key = 202608;
+```
+
+**Tres Inner Join y where**
+
+``` sql
+SELECT i.institucion,
+       c.descripcion AS cuenta,
+       t.anio_mes,
+       f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+JOIN dw.dim_cuenta c      ON f.cuenta_key      = c.cuenta_key
+JOIN dw.dim_tiempo t      ON f.tiempo_key      = t.tiempo_key
+WHERE f.tiempo_key = 202608;
+```
+
+| Instrucción | Función |
+|----|----|
+| `SELECT i.institucion` | Muestra el nombre de la aseguradora. |
+| `c.descripcion AS cuenta` | Muestra la descripción de la cuenta contable y la renombra como `cuenta` en el resultado. |
+| `t.anio_mes` | Muestra el año y mes desde la dimensión tiempo. |
+| `f.valor_total` | Muestra el valor financiero de la tabla de hechos. |
+| `FROM dw.fact_balance f` | Define la tabla principal de la consulta. |
+| `JOIN dw.dim_institucion i` | Relaciona los valores con las instituciones. |
+| `JOIN dw.dim_cuenta c` | Relaciona los valores con las cuentas contables. |
+| `JOIN dw.dim_tiempo t` | Relaciona los valores con los períodos. |
+| `WHERE f.tiempo_key = 202608` | Filtra exclusivamente agosto de 2026, según la codificación del modelo. |
+
+![](images/clipboard-4196301853.png)
+
+Cada `JOIN` responde una pregunta:
+
+-   Institución: ¿a qué aseguradora corresponde el valor?
+
+-   Cuenta: ¿qué concepto contable estamos analizando?
+
+-   Tiempo: ¿a qué período pertenece el registro?
+
+**Cuatro Inner Join con Where y Order By**
+
+``` sql
+SELECT i.institucion,
+       c.descripcion AS cuenta,
+       t.anio_mes,
+       s.descripcion AS tipo_seguro,
+       f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+JOIN dw.dim_cuenta c      ON f.cuenta_key      = c.cuenta_key
+JOIN dw.dim_tiempo t      ON f.tiempo_key      = t.tiempo_key
+JOIN dw.dim_tipo_seguro s ON f.tipo_seguro_key = s.tipo_seguro_key
+WHERE f.tiempo_key = 202608
+ORDER BY f.valor_total DESC;
+```
+
+| nstrucción | ¿Qué estamos haciendo? |
+|----|----|
+| `i.institucion` | Obtenemos el nombre de la aseguradora. |
+| `c.descripcion AS cuenta` | Obtenemos la descripción de la cuenta contable y la mostramos como `cuenta`. |
+| `t.anio_mes` | Obtenemos el período desde la dimensión tiempo. |
+| `s.descripcion AS tipo_seguro` | Obtenemos la descripción del tipo de seguro. |
+| `f.valor_total` | Obtenemos el valor financiero de la tabla de hechos. |
+| `FROM dw.fact_balance f` | Establecemos la tabla de hechos como tabla principal. |
+| `JOIN` (4 veces) | Relacionamos los registros con las cuatro dimensiones. |
+| `WHERE f.tiempo_key = 202608` | Filtramos agosto de 2026, según la codificación temporal. |
+| `ORDER BY f.valor_total DESC` | Ordenamos de mayor a menor según el valor total. |
+
+![](images/clipboard-3359691019.png)
+
+Actualmente estamos ordenando todos los registros financieros del
+período, independientemente de la cuenta contable.
+
+Por ejemplo, pueden aparecer activos, pasivos, patrimonio, primas o
+siniestros, según las cuentas presentes en nuestra base.
+
+Si queremos conocer los mayores activos por aseguradora, debemos agregar
+un filtro de cuenta contable y, si corresponde, agrupar los registros.
+
+Además, `INNER JOIN` solo conserva registros cuyas claves encuentren
+coincidencia en las cuatro dimensiones.
+
+**JOINS AVANZADOS**
+
+**¿Cuál es el activo de cada aseguradora en agosto 2026?**
+
+``` sql
+SELECT i.institucion as nombre, f.valor_total AS activo
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON i.institucion_key = f.institucion_key
+JOIN dw.dim_cuenta c      ON c.cuenta_key      = f.cuenta_key
+WHERE c.cod_cuenta = '1'
+  AND f.tiempo_key = 202608
+ORDER BY activo DESC;
+```
+
+A diferencia de las consultas anteriores, ya no estamos mostrando todas
+las cuentas contables. Ahora seleccionamos únicamente la cuenta de
+activos, identificada con el código `'1'` en nuestro modelo.
+
+| Instrucción | ¿Qué hace? |
+|----|----|
+| `i.institucion AS nombre` | Muestra el nombre de la institución con el encabezado `nombre`. |
+| `f.valor_total AS activo` | Muestra el valor financiero con el encabezado `activo`. |
+| `FROM dw.fact_balance f` | Consulta la tabla de hechos. |
+| `JOIN dw.dim_institucion i` | Relaciona cada registro con su institución. |
+| `JOIN dw.dim_cuenta c` | Relaciona cada registro con su cuenta contable. |
+| `WHERE c.cod_cuenta = '1'` | Selecciona únicamente la cuenta contable de activos. |
+| `AND f.tiempo_key = 202608` | Agrega una segunda condición: agosto de 2026. |
+| `ORDER BY activo DESC` | Ordena los resultados desde el activo más alto hasta el más bajo. |
+
+Estamos diciendo a PostgreSQL que cada registro debe cumplir
+simultáneamente dos condiciones.
+
+Evaluación de las condiciones
+
+|                  |         |              |
+|------------------|---------|--------------|
+| Cuenta           | Período | ¿Se incluye? |
+| Activos (`1`)    | 202608  |  Sí          |
+| Activos (`1`)    | 202607  |  No          |
+| Patrimonio (`3`) | 202608  |  No          |
+
+**¿Que aseguradoras no reportaron?**
+
+``` sql
+SELECT i.institucion, i.ultimo_periodo
+FROM dw.dim_institucion i
+LEFT JOIN dw.fact_balance f
+       ON f.institucion_key = i.institucion_key
+      AND f.tiempo_key = 202608
+WHERE f.institucion_key IS NULL
+  AND i.institucion_key <> -1
+GROUP BY i.institucion, i.ultimo_periodo
+ORDER BY i.ultimo_periodo DESC;
+```
+
+Utilizamos un `LEFT JOIN` para identificar qué instituciones
+aseguradoras NO tienen registros en la tabla de hechos durante agosto de
+2026.
+
+Esta técnica se conoce como `LEFT ANTI JOIN`, implementada mediante
+`LEFT JOIN` y `WHERE ... IS NULL`.
+
+Es especialmente útil para realizar controles de calidad, cobertura y
+actualización de datos dentro de nuestro Data Warehouse.
+
+| Instrucción | ¿Qué estamos haciendo? |
+|----|----|
+| `SELECT i.institucion, i.ultimo_periodo` | Mostramos el nombre de la institución y su último período registrado en la dimensión. |
+| `FROM dw.dim_institucion i` | Partimos de todas las instituciones de nuestra dimensión. |
+| `LEFT JOIN dw.fact_balance f` | Buscamos registros de cada institución en la tabla de hechos, conservando las instituciones aunque no tengan coincidencia. |
+| `ON f.institucion_key = i.institucion_key` | Relacionamos ambas tablas mediante su clave. |
+| `AND f.tiempo_key = 202608` | Buscamos coincidencias exclusivamente en agosto de 2026. |
+| `WHERE f.institucion_key IS NULL` | Seleccionamos las instituciones que no encontraron registros para ese período. |
+| `AND i.institucion_key <> -1` | Excluimos la clave `-1`, que podría representar una institución desconocida o no identificada. |
+| `GROUP BY` | Agrupamos por institución y último período, eliminando combinaciones repetidas. |
+| `ORDER BY i.ultimo_periodo DESC` | Ordenamos desde el último período más reciente hasta el más antiguo. |
+
+**¿Qué diferencia existe entre INNER JOIN y LEFT JOIN?**
+
+![](images/clipboard-1106161913.png)
+
+La diferencia es que el `INNER JOIN` devuelve coincidencias, mientras
+que tu consulta con `LEFT JOIN` y `IS NULL` devuelve precisamente las
+instituciones que no tienen coincidencias.
+
+``` sql
+--RIGTH JOIN
+
+SELECT i.institucion, f.valor_total
+FROM dw.fact_balance f
+RIGHT JOIN dw.dim_institucion i 
+       ON f.institucion_key = i.institucion_key;
+       
+--LEFT JOIN
+       
+SELECT i.institucion, f.valor_total
+FROM dw.fact_balance f
+LEFT JOIN dw.dim_institucion i 
+       ON f.institucion_key = i.institucion_key;
+       
+--FULL JOIN
+SELECT i.institucion, f.valor_total
+FROM dw.fact_balance f
+FULL JOIN dw.dim_institucion i 
+       ON f.institucion_key = i.institucion_key;
+```
+
+**JOINS Compuestos**
+
+``` sql
+
+SELECT
+    i.institucion,
+    f.valor_total
+FROM dw.fact_balance f
+INNER JOIN dw.dim_institucion i
+    ON f.institucion_key = i.institucion_key
+INNER JOIN dw.dim_cuenta c
+    ON c.cuenta_key = f.cuenta_key
+WHERE c.cod_cuenta = '1'
+  AND f.tiempo_key = 202607
+ORDER BY f.valor_total DESC;
+
+
+
+
+
+
+SELECT
+    f.institucion_key,
+    i.institucion,
+    f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_cuenta c
+    ON c.cuenta_key = f.cuenta_key
+LEFT JOIN dw.dim_institucion i
+    ON f.institucion_key = i.institucion_key
+WHERE c.cod_cuenta = '1'
+  AND f.tiempo_key = 202607
+ORDER BY f.valor_total DESC;
+
+
+
+	
+	SELECT
+	    i.institucion,
+	    f.valor_total
+	FROM (
+	    SELECT
+	        f.institucion_key,
+	        f.valor_total
+	    FROM dw.fact_balance f
+	    JOIN dw.dim_cuenta c
+	        ON f.cuenta_key = c.cuenta_key
+	    WHERE c.cod_cuenta = '1'
+	      AND f.tiempo_key = 202607
+	) f
+	RIGHT JOIN dw.dim_institucion i
+	    ON f.institucion_key = i.institucion_key
+	ORDER BY f.valor_total DESC NULLS LAST;
+
+
+
+
+
+SELECT
+    i.institucion,
+    f.valor_total
+FROM (
+    SELECT
+        f.institucion_key,
+        f.valor_total
+    FROM dw.fact_balance f
+    JOIN dw.dim_cuenta c
+        ON f.cuenta_key = c.cuenta_key
+    WHERE c.cod_cuenta = '1'
+      AND f.tiempo_key = 202607
+) f
+FULL JOIN dw.dim_institucion i
+    ON f.institucion_key = i.institucion_key
+ORDER BY f.valor_total DESC NULLS LAST;
+```
+
+### 4.2 Subconsultas (Subqueries)
+
+El objetivo es identificar los registros financieros cuyo `valor_total`
+es superior al promedio de todos los registros de agosto de 2026.
+
+A diferencia de las consultas anteriores, ahora utilizamos el resultado
+de una consulta dentro de otra consulta para establecer una condición.
+
+``` sql
+SELECT i.institucion, f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+WHERE f.valor_total > (
+    SELECT AVG(valor_total)
+    FROM dw.fact_balance
+    WHERE tiempo_key = 202608
+);
+```
+
+| Instrucción | ¿Qué hace? |
+|----|----|
+| `SELECT i.institucion, f.valor_total` | Muestra la institución y su valor financiero. |
+| `FROM dw.fact_balance f` | Establece la tabla de hechos como principal. |
+| `JOIN dw.dim_institucion i` | Relaciona los registros financieros con sus instituciones. |
+| `WHERE f.valor_total >` | Selecciona los registros con valores superiores a un umbral. |
+| `SELECT AVG(valor_total)` | Calcula el promedio de los valores financieros. |
+| `WHERE tiempo_key = 202608` | Limita el cálculo del promedio a agosto de 2026. |
+
+**Cómo funciona?**
+
+Paso 1. Calcular el promedio de agosto
+
+``` sql
+SELECT AVG(valor_total) FROM dw.fact_balance WHERE tiempo_key = 202608;
+```
+
+Ejemplo hipotético
+
+**500.000**
+
+Paso 2. Comparar cada registro con el promedio
+
+La condición se evalúa como:
+
+``` sql
+WHERE f.valor_total > 500000
+```
+
+Paso 3. Mostrar los registros superiores al promedio
+
+| Institución | Valor total | Resultado |
+|-------------|-------------|-----------|
+| Seguros ABC | 900.000     |  Incluido |
+| Seguros XYZ | 700.000     |  Incluido |
+| Seguros DEF | 400.000     |  Excluido |
+
+Colocamos en la misma temporalidad
+
+``` sql
+SELECT
+    i.institucion,f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+WHERE f.tiempo_key = 202608
+  AND f.valor_total > (
+      SELECT AVG(valor_total)
+      FROM dw.fact_balance
+      WHERE tiempo_key = 202608
+  );
+```
+
+El objetivo es identificar los registros de las instituciones
+aseguradoras cuyo valor de activos supera el promedio de los registros
+clasificados como activos durante agosto de 2026.
+
+La diferencia con la consulta anterior es que ahora filtramos
+específicamente el elemento contable `'Activo'`, tanto en la consulta
+principal como en la subconsulta.
+
+``` sql
+SELECT i.institucion,
+       f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+JOIN dw.dim_cuenta c      ON f.cuenta_key      = c.cuenta_key
+WHERE f.tiempo_key = 202608
+  AND c.elemento = 'Activo'
+  AND f.valor_total > (
+      SELECT AVG(f2.valor_total)
+      FROM dw.fact_balance f2
+      JOIN dw.dim_cuenta c2 ON f2.cuenta_key = c2.cuenta_key
+      WHERE f2.tiempo_key = 202608
+        AND c2.elemento = 'Activo'
+  );
+```
+
+| Instrucción | ¿Qué hace? |
+|----|----|
+| `SELECT i.institucion, f.valor_total` | Muestra el nombre de la institución y su valor financiero. |
+| `JOIN dw.dim_institucion i` | Relaciona el valor con la institución aseguradora. |
+| `JOIN dw.dim_cuenta c` | Permite identificar el elemento contable. |
+| `WHERE f.tiempo_key = 202608` | Selecciona agosto de 2026. |
+| `AND c.elemento = 'Activo'` | Conserva únicamente los registros clasificados como activos. |
+| `AND f.valor_total > (...)` | Conserva los registros cuyo valor supera el promedio calculado. |
+| `SELECT AVG(f2.valor_total)` | Calcula el promedio de los valores de activos. |
+| `f2` y `c2` | Son alias de las tablas utilizadas dentro de la subconsulta. |
+
+**Consulta mejorada**
+
+``` sql
+SELECT
+    i.institucion,
+    f.valor_total AS activo,
+    (
+        SELECT AVG(f2.valor_total)
+        FROM dw.fact_balance f2
+        JOIN dw.dim_cuenta c2
+            ON f2.cuenta_key = c2.cuenta_key
+        WHERE f2.tiempo_key = 202608
+          AND c2.elemento = 'Activo'
+    ) AS promedio_activos
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i
+    ON f.institucion_key = i.institucion_key
+JOIN dw.dim_cuenta c
+    ON f.cuenta_key = c.cuenta_key
+WHERE f.tiempo_key = 202608
+  AND c.elemento = 'Activo';
+```
+
+**¿Qué porcentaje del mercado tiene cada aseguradora?**
+
+La subconsulta calcula el total de la prima del sistema. La de afuera
+divide la prima de cada aseguradora para ese total
+
+``` sql
+SELECT i.institucion,
+       f.valor_total,
+       (SELECT AVG(valor_total) FROM dw.fact_balance WHERE tiempo_key = 202608) AS promedio_general
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+WHERE f.tiempo_key = 202608;
+SELECT i.institucion,
+       ROUND(100 * f.valor_total /
+             (SELECT SUM(f2.valor_total)
+              FROM dw.fact_balance f2
+              WHERE f2.cuenta_key = f.cuenta_key
+                AND f2.tiempo_key = 202608), 2) AS cuota_pct
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON i.institucion_key = f.institucion_key
+JOIN dw.dim_cuenta c      ON c.cuenta_key      = f.cuenta_key
+WHERE c.cod_cuenta = '51'
+  AND f.tiempo_key = 202608
+ORDER BY cuota_pct DESC;
+```
+
+¿Cuál es el objetivo?
+
+Calcular qué porcentaje representa el valor financiero de cada registro
+respecto al total de la misma cuenta contable en agosto de 2026.
+
+En nuestro ejemplo de seguros, estamos suponiendo que la cuenta `'51'`
+corresponde a primas emitidas.
+
+| Instrucción | Función |
+|----|----|
+| `SUM(f2.valor_total)` | Calcula la suma de los valores de la cuenta. |
+| `100 * f.valor_total` | Multiplica el valor del registro por 100. |
+| `/` | Divide entre el total calculado. |
+| `ROUND(..., 2)` | Redondea el resultado a dos decimales. |
+| `AS cuota_pct` | Asigna el nombre `cuota_pct` a la nueva columna. |
+| `ORDER BY cuota_pct DESC` | Ordena las participaciones de mayor a menor. |
+
+**¿Por qué utilizamos `f2`?**
+
+Porque estamos consultando dos veces la tabla `dw.fact_balance`.
+
+-   `f` representa la tabla utilizada en la consulta principal.
+
+-   `f2` representa la segunda referencia a esa misma tabla dentro de la
+    subconsulta.
+
+**¿Hay algún problema en esta consulta?**
+
+Sí, hay dos aspectos importantes que conviene revisar antes de
+utilizarla en un indicador financiero.
+
+Primero: si una aseguradora tiene varios registros de primas para el
+mismo período, la consulta calculará porcentajes por registro y no
+necesariamente por institución.
+
+Segundo: si el total de la cuenta es cero, la operación producirá un
+error de división por cero. Podemos evitarlo con `NULLIF()`:
+
+``` sql
+ROUND(
+    100.0 * f.valor_total /
+    NULLIF(
+        (SELECT SUM(f2.valor_total)
+         FROM dw.fact_balance f2
+         WHERE f2.cuenta_key = f.cuenta_key
+           AND f2.tiempo_key = 202608),
+        0
+    ),
+    2
+) AS cuota_pct
+```
+
+`NULLIF(total, 0)` devuelve `NULL` cuando el denominador es cero,
+evitando el error. También utilizamos `100.0` para favorecer una
+división decimal.
+
+**¿Cuál es la diferencia entre las dos consultas?**
+
+| Característica | Primera consulta | Segunda consulta |
+|----|----|----|
+| Función principal | `AVG()` | `SUM()` |
+| Tipo de subconsulta | No correlacionada | Correlacionada |
+| Resultado calculado | Promedio general | Participación porcentual |
+| Comparación | No realiza una comparación | Valor individual respecto al total |
+| Aplicación en BI | Valor de referencia | Cuota o participación |
+
+**¿Qué aseguradoras tienen más activo que el promedio?**
+
+``` sql
+SELECT i.institucion, f.valor_total AS activo
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON i.institucion_key = f.institucion_key
+JOIN dw.dim_cuenta c      ON c.cuenta_key      = f.cuenta_key
+WHERE c.cod_cuenta = '1'
+  AND f.tiempo_key = 202608
+  AND f.valor_total > (SELECT AVG(f2.valor_total)
+                       FROM dw.fact_balance f2
+                       WHERE f2.cuenta_key = f.cuenta_key
+                         AND f2.tiempo_key = 202608)
+ORDER BY activo DESC;
+```
 
 ### 4.3 Windows funtions
+
+-   Una función de ventana calcula algo mirando otras filas sin
+    juntarlas: cada fila sigue apareciendo.
+
+-   Se reconoce por la palabra `OVER (...)`.
+
+-   `RANK()` pone un puesto; `LAG()` trae el valor de la fila anterior.
 
 ### 4.4 Agregaciones
 
