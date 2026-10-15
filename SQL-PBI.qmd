@@ -1150,7 +1150,7 @@ nombre con fechas de vigencia.
 Para un ranking del sistema, el tipo 1 es suficiente y es lo que
 haremos. A esto se le llama dimensión lentamente cambiante (SCD).
 
-### 2.5 Casos prácticos
+### 2.4 Casos prácticos
 
 📌 **Idea central**
 
@@ -1215,6 +1215,8 @@ a situaciones reales:
 
 ## 3. Unidad 2: Esquema Estrella
 
+### 3.1 Star Schema
+
 Diseñar esquemas estrella para mejorar el rendimiento en consultas. Al
 final de la sesión existe el esquema dw con cuatro dimensiones y la
 tabla de hechos fact_balance, cuadrada al centavo con staging.
@@ -1249,7 +1251,7 @@ CREATE TABLE dw.dim_tipo_seguro (
 );
 ```
 
-**Creamos la tabla de hechos**
+### 3.2 Tabla de hechos
 
 ``` sql
 CREATE TABLE dw.fact_balance (
@@ -1284,6 +1286,8 @@ Limpiar (por si se repite la sesión):
 DROP TABLE IF EXISTS dw.fact_balance CASCADE;
 DROP TABLE IF EXISTS dw.dim_tiempo, dw.dim_institucion, dw.dim_cuenta, dw.dim_tipo_seguro CASCADE;
 ```
+
+### 3.3 Tabla de dimensiones
 
 **Vamos a crear la dimensión tiempo**
 
@@ -1552,6 +1556,8 @@ LEFT JOIN dw.dim_tipo_seguro t ON t.codigo          = s.tipo_seguro
 WHERE s.tipo_registro = 'B';
 ```
 
+### 3.4 Optimización
+
 **Optimización con Índices**
 
 Un índice es como el índice de un libro: en vez de leer las 2 millones
@@ -1596,7 +1602,7 @@ Misma respuesta, cientos de veces más rápido. Cuando un gerente filtra
 un dashboard y espera 10 segundos, la causa casi siempre está en el
 modelo, no en Power BI.
 
-**Código Complementario**
+**Código Complementario para eliminar consultas**
 
 ``` sql
 -- Ver las conexiones activas
@@ -1612,3 +1618,116 @@ WHERE datname = 'bi_seguros';
 --borrar base
 drop database bi_seguros
 ```
+
+## 4. Unidad 3: SQL Avanzado
+
+### 4.1 Joins avanzados
+
+-   Un **JOIN** une dos tablas por una columna en común: aquí, las
+    claves `_key`.
+
+-   **INNER JOIN** (o solo `JOIN`): solo las filas que existen en las
+    dos tablas.
+
+-   **LEFT JOIN**: todas las filas de la tabla de la izquierda, aunque
+    no tengan pareja; lo que falta aparece vacío (`NULL`).
+
+**Mis primeros Joins**
+
+``` sql
+SELECT dw.dim_institucion.institucion, dw.fact_balance.valor_total
+FROM dw.fact_balance
+JOIN dw. dim_institucion 
+ON dw.fact_balance.institucion_key = dw.dim_institucion.institucion_key 
+```
+
+Podemos optmizar la escritura de la consulta
+
+``` sql
+SELECT i.institucion, f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key;
+```
+
+Lo que estamos haciendo es unir dos tablas mediante un `JOIN` para
+obtener el nombre de cada institución financiera junto con su valor
+total.
+
+En nuestro modelo estrella de seguros tenemos dos tablas:
+
+-   `dw.fact_balance`: tabla de hechos, contiene los valores financieros
+    y las claves de las instituciones.
+
+-   `dw.dim_institucion`: tabla de dimensiones, contiene los nombres de
+    las instituciones.
+
+Podemos colocar una asginación de alias a las tablas.
+
+``` sql
+SELECT fe.institucion, fa.valor_total
+FROM dw.fact_balance fa
+JOIN dw.dim_institucion fe
+    ON fe.institucion_key = fa.institucion_key;
+```
+
+**Para que sirve:**
+
+-   Simplificar código
+
+-   Identificar de que tabla proviene cada columna
+
+-   Evitar ambiguedades
+
+**Inner Join y Where**
+
+En esta consulta estamos haciendo un `INNER JOIN` entre la tabla de
+hechos y la dimensión institución, pero ahora agregamos un filtro con
+`WHERE` para consultar únicamente agosto de 2026, suponiendo que
+`tiempo_key = 202608` representa ese período.
+
+``` sql
+SELECT i.institucion, f.valor_total
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i
+     ON f.institucion_key = i.institucion_key
+WHERE f.tiempo_key = 202608;
+```
+
+**¿Qué hace cada instrucción?**
+
+| Instrucción | Explicación |
+|----|----|
+| `SELECT` | Selecciona las columnas que queremos visualizar. |
+| `i.institucion` | Obtiene el nombre de la institución. |
+| `f.valor_total` | Obtiene el valor financiero de la tabla de hechos. |
+| `FROM dw.fact_balance f` | Establece la tabla de hechos y le asigna el alias `f`. |
+| `JOIN dw.dim_institucion i` | Une la tabla de hechos con la dimensión institución. |
+| `ON` | Establece la condición que relaciona ambas tablas mediante `institucion_key`. |
+| `WHERE` | Filtra los registros según una condición. |
+| `f.tiempo_key = 202608` | Conserva únicamente los registros del período indicado. |
+
+**Ejemplo práctico**
+
+Supongamos que nuestra tabla de hechos tiene estos registros ficticios:
+
+| institucion_key | tiempo_key | valor_total |
+|-----------------|------------|-------------|
+| 1               | 202607     | 5000        |
+| 1               | 202608     | 6000        |
+| 2               | 202608     | 8000        |
+| 2               | 202609     | 9000        |
+
+Al ejecutar el `JOIN` junto con el `WHERE`, obtenemos:
+
+| institucion | valor_total |
+|-------------|-------------|
+| Seguros ABC | 6000        |
+| Seguros XYZ | 8000        |
+
+### 4.2 Subconsultas
+
+### 4.3 Windows funtions
+
+### 4.4 Agregaciones
+
+### 4.5 Optimización de consultas
