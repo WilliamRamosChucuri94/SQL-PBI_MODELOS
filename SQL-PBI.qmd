@@ -1779,7 +1779,7 @@ WHERE f.tiempo_key = 202608;
 ```
 
 | Instrucción | Función |
-|----|----|
+|------------------------------------|------------------------------------|
 | `SELECT i.institucion` | Muestra el nombre de la aseguradora. |
 | `c.descripcion AS cuenta` | Muestra la descripción de la cuenta contable y la renombra como `cuenta` en el resultado. |
 | `t.anio_mes` | Muestra el año y mes desde la dimensión tiempo. |
@@ -1818,7 +1818,7 @@ ORDER BY f.valor_total DESC;
 ```
 
 | nstrucción | ¿Qué estamos haciendo? |
-|----|----|
+|------------------------------------|------------------------------------|
 | `i.institucion` | Obtenemos el nombre de la aseguradora. |
 | `c.descripcion AS cuenta` | Obtenemos la descripción de la cuenta contable y la mostramos como `cuenta`. |
 | `t.anio_mes` | Obtenemos el período desde la dimensión tiempo. |
@@ -1862,7 +1862,7 @@ las cuentas contables. Ahora seleccionamos únicamente la cuenta de
 activos, identificada con el código `'1'` en nuestro modelo.
 
 | Instrucción | ¿Qué hace? |
-|----|----|
+|------------------------------------|------------------------------------|
 | `i.institucion AS nombre` | Muestra el nombre de la institución con el encabezado `nombre`. |
 | `f.valor_total AS activo` | Muestra el valor financiero con el encabezado `activo`. |
 | `FROM dw.fact_balance f` | Consulta la tabla de hechos. |
@@ -1880,9 +1880,9 @@ Evaluación de las condiciones
 |                  |         |              |
 |------------------|---------|--------------|
 | Cuenta           | Período | ¿Se incluye? |
-| Activos (`1`)    | 202608  |  Sí          |
-| Activos (`1`)    | 202607  |  No          |
-| Patrimonio (`3`) | 202608  |  No          |
+| Activos (`1`)    | 202608  | Sí           |
+| Activos (`1`)    | 202607  | No           |
+| Patrimonio (`3`) | 202608  | No           |
 
 **¿Que aseguradoras no reportaron?**
 
@@ -1909,7 +1909,7 @@ Es especialmente útil para realizar controles de calidad, cobertura y
 actualización de datos dentro de nuestro Data Warehouse.
 
 | Instrucción | ¿Qué estamos haciendo? |
-|----|----|
+|------------------------------------|------------------------------------|
 | `SELECT i.institucion, i.ultimo_periodo` | Mostramos el nombre de la institución y su último período registrado en la dimensión. |
 | `FROM dw.dim_institucion i` | Partimos de todas las instituciones de nuestra dimensión. |
 | `LEFT JOIN dw.fact_balance f` | Buscamos registros de cada institución en la tabla de hechos, conservando las instituciones aunque no tengan coincidencia. |
@@ -1986,23 +1986,23 @@ ORDER BY f.valor_total DESC;
 
 
 
-	
-	SELECT
-	    i.institucion,
-	    f.valor_total
-	FROM (
-	    SELECT
-	        f.institucion_key,
-	        f.valor_total
-	    FROM dw.fact_balance f
-	    JOIN dw.dim_cuenta c
-	        ON f.cuenta_key = c.cuenta_key
-	    WHERE c.cod_cuenta = '1'
-	      AND f.tiempo_key = 202607
-	) f
-	RIGHT JOIN dw.dim_institucion i
-	    ON f.institucion_key = i.institucion_key
-	ORDER BY f.valor_total DESC NULLS LAST;
+    
+    SELECT
+        i.institucion,
+        f.valor_total
+    FROM (
+        SELECT
+            f.institucion_key,
+            f.valor_total
+        FROM dw.fact_balance f
+        JOIN dw.dim_cuenta c
+            ON f.cuenta_key = c.cuenta_key
+        WHERE c.cod_cuenta = '1'
+          AND f.tiempo_key = 202607
+    ) f
+    RIGHT JOIN dw.dim_institucion i
+        ON f.institucion_key = i.institucion_key
+    ORDER BY f.valor_total DESC NULLS LAST;
 
 
 
@@ -2046,7 +2046,7 @@ WHERE f.valor_total > (
 ```
 
 | Instrucción | ¿Qué hace? |
-|----|----|
+|------------------------------------|------------------------------------|
 | `SELECT i.institucion, f.valor_total` | Muestra la institución y su valor financiero. |
 | `FROM dw.fact_balance f` | Establece la tabla de hechos como principal. |
 | `JOIN dw.dim_institucion i` | Relaciona los registros financieros con sus instituciones. |
@@ -2078,9 +2078,9 @@ Paso 3. Mostrar los registros superiores al promedio
 
 | Institución | Valor total | Resultado |
 |-------------|-------------|-----------|
-| Seguros ABC | 900.000     |  Incluido |
-| Seguros XYZ | 700.000     |  Incluido |
-| Seguros DEF | 400.000     |  Excluido |
+| Seguros ABC | 900.000     | Incluido  |
+| Seguros XYZ | 700.000     | Incluido  |
+| Seguros DEF | 400.000     | Excluido  |
 
 Colocamos en la misma temporalidad
 
@@ -2123,7 +2123,7 @@ WHERE f.tiempo_key = 202608
 ```
 
 | Instrucción | ¿Qué hace? |
-|----|----|
+|------------------------------------|------------------------------------|
 | `SELECT i.institucion, f.valor_total` | Muestra el nombre de la institución y su valor financiero. |
 | `JOIN dw.dim_institucion i` | Relaciona el valor con la institución aseguradora. |
 | `JOIN dw.dim_cuenta c` | Permite identificar el elemento contable. |
@@ -2191,7 +2191,7 @@ En nuestro ejemplo de seguros, estamos suponiendo que la cuenta `'51'`
 corresponde a primas emitidas.
 
 | Instrucción | Función |
-|----|----|
+|------------------------------------|------------------------------------|
 | `SUM(f2.valor_total)` | Calcula la suma de los valores de la cuenta. |
 | `100 * f.valor_total` | Multiplica el valor del registro por 100. |
 | `/` | Divide entre el total calculado. |
@@ -2241,7 +2241,7 @@ división decimal.
 **¿Cuál es la diferencia entre las dos consultas?**
 
 | Característica | Primera consulta | Segunda consulta |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | Función principal | `AVG()` | `SUM()` |
 | Tipo de subconsulta | No correlacionada | Correlacionada |
 | Resultado calculado | Promedio general | Participación porcentual |
@@ -2273,6 +2273,833 @@ ORDER BY activo DESC;
 
 -   `RANK()` pone un puesto; `LAG()` trae el valor de la fila anterior.
 
+Esta consulta utiliza una función de ventana (`WINDOW FUNCTION`) para
+calcular el promedio de `valor_total` de todas las observaciones de un
+mismo período, sin agrupar ni eliminar filas.
+
+``` sql
+SELECT i.institucion,
+       f.valor_total,
+       AVG(f.valor_total) OVER (PARTITION BY f.tiempo_key) AS promedio_periodo
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+WHERE f.tiempo_key = 202608;
+```
+
+| Código | Explicación |
+|------------------------------------|------------------------------------|
+| `SELECT i.institucion` | Muestra el nombre de la institución. |
+| `f.valor_total` | Muestra el valor correspondiente a cada registro de la tabla de hechos. |
+| `AVG(f.valor_total)` | Calcula el promedio de los valores. |
+| `OVER()` | Convierte `AVG` en una función de ventana y conserva las filas originales. |
+| `PARTITION BY f.tiempo_key` | Divide los registros por período para calcular un promedio independiente por cada uno. |
+| `JOIN` | Relaciona los registros de balance con las instituciones. |
+| `WHERE f.tiempo_key = 202608` | Filtra exclusivamente agosto de 2026. |
+
+Supongamos que tenemos estos registros ficticios:
+
+| Institución | valor_total | promedio_periodo |
+|-------------|-------------|------------------|
+| Seguros A   | 100.000     | 250.000          |
+| Seguros B   | 200.000     | 250.000          |
+| Seguros C   | 300.000     | 250.000          |
+| Seguros D   | 400.000     | 250.000          |
+
+El promedio se calcula así:
+$\bar{x}=\frac{100.000+200.000+300.000+400.000}{4}=250.000$
+
+Observa: el promedio aparece repetido en todas las filas, pero cada
+institución conserva su propio valor.
+
+**Suma Acumulada**
+
+``` sql
+SELECT i.institucion,
+       f.valor_total,
+       SUM(f.valor_total) OVER (ORDER BY f.valor_total DESC) AS acumulado
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+WHERE f.tiempo_key = 202608;
+```
+
+| Código | Explicación |
+|------------------------------------|------------------------------------|
+| `SUM(f.valor_total)` | Calcula la suma de los valores. |
+| `OVER()` | Indica que la suma es una función de ventana. |
+| `ORDER BY f.valor_total DESC` | Ordena los valores de mayor a menor dentro de la ventana. |
+| `AS acumulado` | Asigna un nombre a la columna calculada. |
+| `WHERE f.tiempo_key = 202608` | Selecciona agosto de 2026. |
+
+Supongamos que tenemos los siguientes datos ficticios:
+
+| Institución | valor_total | acumulado |
+|-------------|-------------|-----------|
+| Seguros A   | 500.000     | 500.000   |
+| Seguros B   | 300.000     | 800.000   |
+| Seguros C   | 150.000     | 950.000   |
+| Seguros D   | 50.000      | 1.000.000 |
+
+Evolución de la suma acumulada
+
+**Comparación con el máximo**
+
+Esta consulta utiliza la función de ventana
+`MAX() OVER (PARTITION BY ...)` para identificar el valor máximo
+registrado en un período, manteniendo todas las filas originales.
+
+En tu base de balances de seguros, permite comparar el valor de cada
+registro con el valor más alto de agosto de 2026.
+
+``` sql
+SELECT i.institucion,
+       f.valor_total,
+       MAX(f.valor_total) OVER (PARTITION BY f.tiempo_key) AS maximo_periodo
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON f.institucion_key = i.institucion_key
+WHERE f.tiempo_key = 202608;
+```
+
+| Código | Explicación |
+|------------------------------------|------------------------------------|
+| `i.institucion` | Muestra el nombre de la institución. |
+| `f.valor_total` | Muestra el valor de cada registro. |
+| `MAX(f.valor_total)` | Identifica el valor más alto. |
+| `OVER()` | Permite calcular el máximo sin eliminar filas. |
+| `PARTITION BY f.tiempo_key` | Calcula un máximo independiente por período. |
+| `WHERE f.tiempo_key = 202608` | Filtra agosto de 2026. |
+| `AS maximo_periodo` | Nombra la nueva columna. |
+
+Supongamos que tenemos estos datos ficticios:
+
+| Institución | valor_total | maximo_periodo |
+|-------------|-------------|----------------|
+| Seguros A   | 150.000     | 500.000        |
+| Seguros B   | 300.000     | 500.000        |
+| Seguros C   | 500.000     | 500.000        |
+| Seguros D   | 200.000     | 500.000        |
+
+En las funciones de ventana (Window Functions) de PostgreSQL,
+`PARTITION BY` y `ORDER BY` cumplen funciones diferentes, pero pueden
+utilizarse juntos.
+
+La diferencia fundamental es:
+
+-   `PARTITION BY` → divide los datos en grupos para realizar cálculos
+    independientes.
+
+-   `ORDER BY` → establece el orden de las filas dentro de la ventana,
+    especialmente para rankings y acumulados.
+
+-   `PARTITION BY` + `ORDER BY` → permite ordenar y calcular dentro de
+    cada grupo.
+
+Supongamos que tenemos estos registros ficticios:
+
+| Institución | Período | Valor |
+|-------------|---------|-------|
+| Seguros A   | Julio   | 100   |
+| Seguros B   | Julio   | 300   |
+| Seguros C   | Julio   | 200   |
+| Seguros A   | Agosto  | 400   |
+| Seguros B   | Agosto  | 500   |
+| Seguros C   | Agosto  | 300   |
+
+**Cuando utilizar Partition by**
+
+Cuando quieres realizar un cálculo independiente para cada grupo.
+
+Por ejemplo: ¿cuál es el promedio del valor registrado en cada mes?
+
+Resultado ficticio:
+
+| Institución | Período | Valor | Promedio |
+|-------------|---------|-------|----------|
+| Seguros A   | Julio   | 100   | 200      |
+| Seguros B   | Julio   | 300   | 200      |
+| Seguros C   | Julio   | 200   | 200      |
+| Seguros A   | Agosto  | 400   | 400      |
+| Seguros B   | Agosto  | 500   | 400      |
+| Seguros C   | Agosto  | 300   | 400      |
+
+Aquí PostgreSQL crea dos particiones:
+
+Julio 2026
+
+Valores: 100, 300, 200
+
+**200**
+
+Promedio de julio
+
+Agosto 2026
+
+Valores: 400, 500, 300
+
+**400**
+
+Promedio de agosto
+
+Cada período tiene su propio promedio.
+
+**¿Cuándo utilizar `ORDER BY` dentro de `OVER()`?**
+
+Cuando necesitas que el cálculo dependa del orden de las observaciones.
+
+Por ejemplo, quieres calcular el acumulado de los valores de agosto de
+mayor a menor.
+
+| Institución | Valor | Acumulado |
+|-------------|-------|-----------|
+| Seguros B   | 500   | 500       |
+| Seguros A   | 400   | 900       |
+| Seguros C   | 300   | 1.200     |
+
+Aquí `ORDER BY` dentro de `OVER()` determina el orden del cálculo
+acumulado.
+
+El `ORDER BY` final determina el orden en que aparecen los resultados.
+
+Importante: si existen valores iguales, agrega una clave única al
+ordenamiento de la ventana para garantizar un acumulado fila por fila
+reproducible.
+
+**Cuando utilizar ambos**
+
+Cuando quieres realizar cálculos ordenados dentro de cada grupo.
+
+Por ejemplo: ¿qué posición ocupa cada registro dentro de su mes, según
+su valor?
+
+| Institución | Período | Valor | Ranking |
+|-------------|---------|-------|---------|
+| Seguros B   | Julio   | 300   | 1       |
+| Seguros C   | Julio   | 200   | 2       |
+| Seguros A   | Julio   | 100   | 3       |
+| Seguros B   | Agosto  | 500   | 1       |
+| Seguros A   | Agosto  | 400   | 2       |
+| Seguros C   | Agosto  | 300   | 3       |
+
+Observa que el ranking vuelve a comenzar en 1 al cambiar de período.
+
+| Pregunta de análisis | Qué utilizar |
+|------------------------------------|------------------------------------|
+| ¿Cuál es el promedio por período? | `PARTITION BY` |
+| ¿Cuál es el máximo por institución? | `PARTITION BY` |
+| ¿Cuál es el acumulado de mayor a menor? | `ORDER BY` |
+| ¿Qué posición ocupa cada registro? | `ORDER BY` |
+| ¿Cuál es el ranking por cada mes? | Ambos |
+| ¿Cuál es el acumulado dentro de cada institución? | Ambos |
+| ¿Cuál es el total general repetido en todas las filas? | `OVER()` sin ninguno |
+
+**Ranking por prima**
+
+``` sql
+SELECT i.institucion,
+       f.valor_total AS prima,
+       RANK() OVER (ORDER BY f.valor_total DESC) AS puesto
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON i.institucion_key = f.institucion_key
+JOIN dw.dim_cuenta c      ON c.cuenta_key      = f.cuenta_key
+WHERE c.cod_cuenta = '51'
+  AND f.tiempo_key = 202608;
+```
+
+| Código | Explicación |
+|------------------------------------|------------------------------------|
+| `t.anio` | Identifica el año del balance. |
+| `SUM(f.valor_total)` | Suma los valores correspondientes a la cuenta 51. |
+| `/ 1000000` | Convierte los valores a millones. |
+| `ROUND(..., 1)` | Redondea el resultado a un decimal. |
+| `LAG()` | Recupera el valor de la fila anterior. |
+| `OVER (ORDER BY t.anio)` | Ordena los resultados anuales para que `LAG()` identifique el año anterior disponible. |
+| `t.es_cierre_anio` | Filtra los registros señalados como cierre anual. |
+| `GROUP BY t.anio` | Agrupa los registros para obtener un total por año. |
+| `ORDER BY t.anio` | Presenta los resultados cronológicamente. |
+
+Supongamos que tenemos estos datos ficticios de primas emitidas:
+
+| Año  | Primas (millones) | Crecimiento (millones) |
+|------|-------------------|------------------------|
+| 2022 | 1.200             | NULL                   |
+| 2023 | 1.350             | +150                   |
+| 2024 | 1.500             | +150                   |
+| 2025 | 1.420             | -80                    |
+| 2026 | 1.600             | +180                   |
+
+Esta consulta calcula las primas emitidas por año y cuánto aumentaron o
+disminuyeron respecto al año anterior, utilizando `SUM()`, `GROUP BY` y
+la función de ventana `LAG()`.
+
+``` sql
+SELECT t.anio,
+       ROUND(SUM(f.valor_total) / 1000000, 1) AS prima_millones,
+       ROUND(
+           SUM(f.valor_total) / 1000000
+           - LAG(SUM(f.valor_total) / 1000000)
+             OVER (ORDER BY t.anio),
+           1
+       ) AS crecimiento_millones
+FROM dw.fact_balance f
+JOIN dw.dim_tiempo t
+    ON t.tiempo_key = f.tiempo_key
+JOIN dw.dim_cuenta c
+    ON c.cuenta_key = f.cuenta_key
+WHERE c.cod_cuenta = '51'
+  AND t.es_cierre_anio
+GROUP BY t.anio
+ORDER BY t.anio; 
+```
+
+![](images/clipboard-4043915659.png)
+
+| Año  | Primas (millones) | Año anterior | Crecimiento |
+|------|-------------------|--------------|-------------|
+| 2022 | 1.200             | —            | NULL        |
+| 2023 | 1.350             | 1.200        | +150        |
+| 2024 | 1.500             | 1.350        | +150        |
+| 2025 | 1.420             | 1.500        | -80         |
+| 2026 | 1.600             | 1.420        | +180        |
+
+**Ejemplo: comparación de primas entre años**
+
+Para 2025, PostgreSQL hace:
+
+$$
+\underbrace{1420}_{\text{Año actual}}
+-
+\underbrace{1500}_{\text{Año anterior}}
+=
+-80
+$$
+
+Esto significa que las primas disminuyeron 80 millones respecto a 2024.
+
+------------------------------------------------------------------------
+
+### 4. ¿Por qué tenemos `SUM()` dentro de `LAG()`?
+
+Esta es la parte más importante:
+
+``` sql
+LAG(SUM(f.valor_total) / 1000000)
+OVER (ORDER BY t.anio)
+```
+
+Aquí ocurren dos operaciones distintas:
+
+`SUM(f.valor_total)` calcula las primas totales de cada año, porque
+estás utilizando `GROUP BY t.anio`.
+
+`LAG(...)` toma ese resultado anual y recupera el valor de la fila
+anterior.
+
+Por eso PostgreSQL permite utilizar una función agregada dentro de una
+función de ventana.
+
+No estamos recuperando una operación individual del año anterior, sino
+el total anual previamente calculado.
+
 ### 4.4 Agregaciones
 
+-   `GROUP BY` junta filas en grupos y calcula `SUM`, `COUNT` o `AVG`
+    por grupo.
+
+-   `WHERE` filtra filas **antes** de agrupar.
+
+-   `HAVING` filtra grupos **después** de agrupar.
+
+``` sql
+SELECT s.descripcion                           AS tipo_seguro,
+       COUNT(*)                                AS aseguradoras,
+       ROUND(SUM(f.valor_vida)    / 1000000, 1) AS vida_millones,
+       ROUND(SUM(f.valor_general) / 1000000, 1) AS generales_millones,
+       ROUND(SUM(f.valor_total)   / 1000000, 1) AS total_millones
+FROM dw.fact_balance f
+JOIN dw.dim_tipo_seguro s ON s.tipo_seguro_key = f.tipo_seguro_key
+JOIN dw.dim_cuenta c      ON c.cuenta_key      = f.cuenta_key
+WHERE c.cod_cuenta = '51'
+  AND f.tiempo_key = 202607
+GROUP BY s.descripcion
+ORDER BY total_millones DESC;
+```
+
+| Código | ¿Qué hace? |
+|------------------------------------|------------------------------------|
+| `s.descripcion` | Identifica el tipo de seguro. |
+| `COUNT(*)` | Cuenta las filas de cada grupo. |
+| `SUM(f.valor_vida)` | Suma los valores de seguros de vida. |
+| `SUM(f.valor_general)` | Suma los valores de seguros generales. |
+| `SUM(f.valor_total)` | Suma los valores totales. |
+| `/ 1000000` | Expresa los valores en millones. |
+| `ROUND(..., 1)` | Redondea a un decimal. |
+| `WHERE c.cod_cuenta = '51'` | Selecciona únicamente la cuenta contable 51. |
+| `WHERE f.tiempo_key = 202607` | Filtra julio de 2026. |
+| `GROUP BY s.descripcion` | Agrupa las observaciones por tipo de seguro. |
+| `ORDER BY total_millones DESC` | Ordena los grupos del mayor al menor total. |
+
+**Aseguradoras que vendieron más de 100 millones en 2025.**
+
+``` sql
+SELECT i.institucion, ROUND(SUM(f.valor_total) / 1000000, 1) AS prima_millones
+FROM dw.fact_balance f
+JOIN dw.dim_institucion i ON i.institucion_key = f.institucion_key
+JOIN dw.dim_cuenta c      ON c.cuenta_key      = f.cuenta_key
+WHERE c.cod_cuenta = '51'
+  AND f.tiempo_key = 202512
+GROUP BY i.institucion
+HAVING SUM(f.valor_total) > 100000000
+ORDER BY prima_millones DESC;
+```
+
+| Instrucción | ¿Qué hace? |
+|------------------------------------|------------------------------------|
+| `SELECT i.institucion` | Selecciona el nombre de la aseguradora. |
+| `SUM(f.valor_total)` | Suma las primas de cada institución. |
+| `/ 1000000` | Convierte los valores a millones. |
+| `ROUND(..., 1)` | Redondea los millones a un decimal. |
+| `WHERE c.cod_cuenta = '51'` | Selecciona la cuenta de primas emitidas. |
+| `WHERE f.tiempo_key = 202512` | Selecciona diciembre de 2025. |
+| `GROUP BY i.institucion` | Agrupa los registros por aseguradora. |
+| `HAVING SUM(f.valor_total) > 100000000` | Conserva únicamente las instituciones cuya suma supera 100 millones. |
+| `ORDER BY prima_millones DESC` | Ordena las instituciones de mayor a menor. |
+
+**¿Cuál es la diferencia entre `WHERE` y `HAVING`?**
+
+`WHERE` filtra registros antes de agrupar.
+
+`HAVING` filtra grupos después de calcular las agregaciones.
+
+Supongamos estos datos ficticios:
+
+| Institución | Registro | Valor (millones) |
+|-------------|----------|------------------|
+| Seguros A   | 1        | 80               |
+| Seguros A   | 2        | 70               |
+| Seguros B   | 1        | 60               |
+| Seguros B   | 2        | 30               |
+| Seguros C   | 1        | 120              |
+| Seguros D   | 1        | 50               |
+
+Primero, `GROUP BY` y `SUM()` calculan los totales:
+
+| Institución | Total (millones) |
+|-------------|------------------|
+| Seguros A   | 150              |
+| Seguros B   | 90               |
+| Seguros C   | 120              |
+| Seguros D   | 50               |
+
+Después se aplica:
+
+``` sql
+HAVING SUM(f.valor_total) > 100000000
+```
+
+Resultado final:
+
+| Institución | prima_millones |
+|-------------|----------------|
+| Seguros A   | 150,0          |
+| Seguros C   | 120,0          |
+
+Seguros B y Seguros D desaparecen porque no superan el umbral.
+
 ### 4.5 Optimización de consultas
+
+En clase trabajamos con tres capas de datos:
+
+| Capa | Función | Ejemplo |
+|:-----------------------|:-----------------------|:-----------------------|
+| **STAGING** | Recepción y control de calidad de datos originales | `staging.reportes_raw` |
+| **DW** | Datos depurados y modelados dimensionalmente | `dw.fact_balance`, `dw.dim_institucion` |
+| **KPI** | Indicadores, vistas y agregados para análisis | Vistas del esquema `kpi` y Power BI |
+
+**Flujo general:** archivo CSV → `staging` → validación y transformación
+→ `dw` → `kpi` → Power BI.
+
+::: {.callout-warning title="Antes de ejecutar los ejemplos"}
+Las consultas están escritas para PostgreSQL. Algunos ejemplos suponen
+tablas y columnas que pueden no existir en tu base (por ejemplo,
+`staging.control_carga` y `fecha_reporte`). Ajusta los nombres antes de
+ejecutarlos. Los ejemplos `SELECT` son de lectura; `INSERT`,
+`CREATE INDEX` y otras instrucciones sí modifican objetos o datos.
+Utiliza una base de práctica.
+:::
+
+**Importación de datos y transacciones**
+
+**Configuración de importación en DBeaver**
+
+En **Import Data** (importación de CSV hacia una tabla), revisa las
+opciones disponibles en tu versión de DBeaver. Los nombres pueden
+cambiar ligeramente según el controlador y la versión.
+
+| Parámetro | Punto de partida didáctico | ¿Qué comprobar? |
+|:-----------------------|:-----------------------|:-----------------------|
+| Use transactions | Activado, si la opción está disponible | Manejo de errores y confirmaciones |
+| Commit after row insert | Comparar 1.000, 5.000 y 10.000 | Tiempo y trabajo pendiente de confirmar |
+| Disable batches | Desactivado inicialmente | Diferencias en tiempo y detección de errores |
+| Use multi-row value insert | Comparar activado/desactivado | Compatibilidad y velocidad de inserción |
+| Multi-row insert batch size | Comparar 100 y 500 | Rendimiento y tamaño de sentencias |
+| Truncate target table | Desactivado | Evitar borrar registros por accidente |
+
+::: {.callout-important title="No existe un tamaño universal de lote"}
+No hay una fórmula válida para todas las tablas —por ejemplo, "10 % del
+número de registros"— que determine el `COMMIT` óptimo. La elección
+depende de la conexión, del tamaño de filas, las restricciones, los
+índices, los recursos del servidor y el modo de carga.
+:::
+
+**¿Qué es una transacción?**
+
+Una transacción agrupa operaciones que deben confirmarse o revertirse
+conjuntamente:
+
+-   `BEGIN`: inicia una transacción explícita.
+-   `COMMIT`: confirma sus cambios.
+-   `ROLLBACK`: cancela los cambios todavía no confirmados de esa
+    transacción.
+
+**Ejemplo de una transacción confirmada:**
+
+``` sql
+-- Preparación didáctica: ejecutar una vez en la base de prueba.
+CREATE SCHEMA IF NOT EXISTS staging;
+CREATE TABLE IF NOT EXISTS staging.control_carga (
+    id          INTEGER PRIMARY KEY,
+    descripcion TEXT NOT NULL
+);
+
+BEGIN;
+INSERT INTO staging.control_carga (id, descripcion)
+VALUES (1, 'Carga de prueba');
+COMMIT;
+```
+
+**Ejemplo de una transacción revertida:**
+
+``` sql
+BEGIN;
+INSERT INTO staging.control_carga (id, descripcion)
+VALUES (2, 'Registro incorrecto');
+ROLLBACK;
+
+-- Comprobar que el id = 2 no quedó confirmado.
+SELECT *
+FROM staging.control_carga
+WHERE id = 2;
+```
+
+::: {.callout-tip title="Para explicar en clase"}
+Si importas 100.000 registros y confirmas cada 10.000, el proceso puede
+realizar aproximadamente **10 confirmaciones**. Si un lote falla, las
+transacciones anteriores ya confirmadas no se deshacen por un `ROLLBACK`
+posterior. Los detalles dependen de cómo DBeaver implemente la
+importación.
+:::
+
+**¿Qué conviene: 1.000, 5.000 o 10.000?**
+
+Un lote pequeño puede limitar el trabajo sin confirmar, pero genera más
+operaciones de confirmación. Un lote grande reduce la frecuencia de
+`COMMIT`, pero aumenta el volumen que podría necesitar repetirse si
+falla la transacción activa. **Mide ambos escenarios y controla los
+errores y duplicados**.
+
+**¿Qué significa `Disable batches`?**
+
+Los *batches* permiten agrupar inserciones enviadas al motor. En
+términos generales:
+
+-   **Disable batches desactivado:** habilita el uso de inserciones por
+    lotes cuando el modo de carga las admite; suele ser preferible en
+    cargas grandes.
+-   **Disable batches activado:** deshabilita esa modalidad; puede
+    ayudar a diagnosticar errores particulares, aunque suele ser más
+    lento.
+
+**Distinción importante:** un *batch* de inserción **no es
+necesariamente lo mismo** que una transacción. El tamaño del lote
+enviado y la frecuencia de `COMMIT` pueden controlarse por separado.
+
+**Alternativa para cargas masivas: `COPY`**
+
+Para volúmenes grandes, PostgreSQL ofrece `COPY`. La sintaxis del
+siguiente ejemplo **requiere que el servidor PostgreSQL tenga acceso al
+archivo**, lo que no siempre ocurre cuando el CSV está solamente en el
+computador del estudiante.
+
+``` sql
+-- Ejemplo orientativo; NO ejecutar sin ajustar la ruta y permisos.
+COPY staging.reportes_raw
+FROM '/ruta/servidor/reportes.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',');
+```
+
+Si el archivo está en el equipo del estudiante, se puede emplear la
+importación gráfica de DBeaver o `\copy` desde **psql** (no confundir
+`\copy` con SQL estándar ejecutable en el editor de DBeaver).
+
+**Buenas prácticas de consultas SQL**
+
+**Selecciona solo las columnas necesarias**
+
+**Evita recuperar todas las columnas innecesariamente:**
+
+``` sql
+SELECT *
+FROM dw.fact_balance;
+```
+
+**Mejor para una consulta específica:**
+
+``` sql
+SELECT tiempo_key, institucion_key, valor_total
+FROM dw.fact_balance;
+```
+
+Esto puede reducir la transferencia y el procesamiento de resultados.
+`SELECT *` es útil durante una exploración rápida, no como elección
+automática en reportes repetitivos.
+
+**Práctica 2. Filtra con `WHERE` según el objetivo**
+
+``` sql
+SELECT institucion_key, valor_total
+FROM dw.fact_balance
+WHERE tiempo_key = 202608;
+```
+
+::: {.callout-note title="¿El `WHERE` debe ir primero para que sea más rápido?"}
+**No.** En la sintaxis de la consulta, `WHERE` se escribe después de
+`FROM` y los `JOIN`. PostgreSQL emplea un optimizador que puede
+reorganizar operaciones según estadísticas, índices y costos. Tampoco
+existe una regla general de poner primero la condición "más selectiva"
+dentro del texto del `WHERE`.
+:::
+
+**Diferencia `WHERE`, `GROUP BY` y `HAVING`**
+
+``` sql
+SELECT
+    institucion_key,
+    SUM(valor_total) AS total
+FROM dw.fact_balance
+WHERE tiempo_key = 202608
+GROUP BY institucion_key
+HAVING SUM(valor_total) > 100000000
+ORDER BY total DESC;
+```
+
+| Cláusula   | ¿Qué hace?                                  |
+|:-----------|:--------------------------------------------|
+| `WHERE`    | Filtra filas antes de la agrupación lógica  |
+| `GROUP BY` | Reúne filas por categorías                  |
+| `HAVING`   | Filtra grupos después de calcular agregados |
+| `ORDER BY` | Ordena la salida                            |
+
+Cuando el filtro se refiere a datos de cada fila (por ejemplo, el
+período), normalmente corresponde a `WHERE`; si se refiere a una suma o
+un conteo agrupado, corresponde a `HAVING`.
+
+**Evita funciones innecesarias sobre columnas indexadas**
+
+**Ejemplo menos favorable para un índice B-tree simple de fecha:**
+
+``` sql
+-- Solo si staging.reportes_raw tiene una columna fecha_reporte tipo DATE.
+SELECT *
+FROM staging.reportes_raw
+WHERE EXTRACT(YEAR FROM fecha_reporte) = 2026;
+```
+
+**Versión mediante rango:**
+
+``` sql
+SELECT *
+FROM staging.reportes_raw
+WHERE fecha_reporte >= DATE '2026-01-01'
+  AND fecha_reporte <  DATE '2027-01-01';
+```
+
+El rango puede aprovechar directamente un índice B-tree ordinario sobre
+`fecha_reporte`. La primera versión también podría optimizarse mediante
+un índice de expresión adecuado; **no es una prohibición absoluta de
+funciones**.
+
+**Define correctamente los `JOIN`**
+
+``` sql
+SELECT
+    i.institucion,
+    f.valor_total
+FROM dw.fact_balance AS f
+JOIN dw.dim_institucion AS i
+  ON i.institucion_key = f.institucion_key
+WHERE f.tiempo_key = 202608;
+```
+
+-   Comprueba la relación entre las claves.
+-   Verifica que las dimensiones tengan claves únicas donde corresponda.
+-   No uses `DISTINCT` para esconder duplicaciones provocadas por
+    relaciones incorrectas.
+-   Verifica la **granularidad** de la tabla de hechos antes de sumar
+    montos.
+
+**Revisión didáctica de duplicados en la dimensión:**
+
+``` sql
+SELECT institucion_key, COUNT(*) AS apariciones
+FROM dw.dim_institucion
+GROUP BY institucion_key
+HAVING COUNT(*) > 1;
+```
+
+Si la clave debe ser única, esta consulta debería devolver cero filas.
+
+**Índices en PostgreSQL**
+
+**¿Para qué sirve un índice?**
+
+Un índice es una estructura auxiliar que puede acelerar la búsqueda de
+registros. Sin índice, PostgreSQL podría utilizar un **Sequential
+Scan**; con índice, podría utilizar un **Index Scan** o un **Bitmap
+Index Scan**. **El motor decide el plan**, no el simple hecho de que un
+índice exista.
+
+**Crear un índice en un filtro frecuente**
+
+``` sql
+-- Cambia físicamente la base de datos: usar solo en ambiente de práctica.
+CREATE INDEX IF NOT EXISTS idx_balance_tiempo
+ON dw.fact_balance (tiempo_key);
+```
+
+Consulta ilustrativa:
+
+``` sql
+SELECT tiempo_key, institucion_key, valor_total
+FROM dw.fact_balance
+WHERE tiempo_key = 202608;
+```
+
+::: {.callout-warning title="Un índice no garantiza rapidez"}
+Si la tabla es pequeña o el filtro devuelve una gran proporción de ella,
+un recorrido secuencial puede ser más eficiente. El índice ocupa espacio
+y añade costos a inserciones, actualizaciones y borrados.
+:::
+
+**Crear índices compuestos cuando hay patrones de consulta**
+
+``` sql
+CREATE INDEX IF NOT EXISTS idx_balance_tiempo_institucion
+ON dw.fact_balance (tiempo_key, institucion_key);
+```
+
+Consulta que podría aprovecharlo:
+
+``` sql
+SELECT valor_total
+FROM dw.fact_balance
+WHERE tiempo_key = 202608
+  AND institucion_key = 15;
+```
+
+En un B-tree compuesto, **el orden de las columnas importa**,
+especialmente para condiciones sobre las columnas iniciales. Evita crear
+índices redundantes sin revisar los que ya existen.
+
+**Inspeccionar índices existentes**
+
+``` sql
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'dw'
+  AND tablename = 'fact_balance'
+ORDER BY indexname;
+```
+
+Antes de crear índices nuevos, revisa claves primarias y otros índices
+existentes.
+
+**Verificar el rendimiento con `EXPLAIN ANALYZE`**
+
+**¿Por qué medir?**
+
+En vez de suponer que una consulta es eficiente por su apariencia,
+analiza **el plan de ejecución real**.
+
+``` sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    institucion_key,
+    SUM(valor_total) AS total
+FROM dw.fact_balance
+WHERE tiempo_key = 202608
+GROUP BY institucion_key;
+```
+
+| Indicador           | Interpretación                                    |
+|:--------------------|:--------------------------------------------------|
+| `Seq Scan`          | Lectura secuencial de la tabla                    |
+| `Index Scan`        | Búsqueda usando un índice                         |
+| `Bitmap Index Scan` | Búsqueda mediante mapa de posiciones del índice   |
+| `Planning Time`     | Tiempo utilizado para preparar el plan            |
+| `Execution Time`    | Tiempo de ejecución del plan                      |
+| `rows`              | Filas estimadas o reales, según el lugar del plan |
+| `Buffers`           | Actividad de bloques en memoria/caché o disco     |
+
+::: {.callout-warning title="Cuidado con instrucciones de escritura"}
+`EXPLAIN (ANALYZE)` **ejecuta** la sentencia, incluso cuando es un
+`UPDATE`, `DELETE` o `INSERT`. En clase usa consultas `SELECT` de
+lectura para evitar modificaciones accidentales.
+:::
+
+## 5. Unidad 4: Métricas y KPIs
+
+-   Una **métrica** es un número: la prima emitida.
+
+-   Un **KPI** es una métrica con una **meta**: "siniestralidad menor al
+    35 %".
+
+-   Todo KPI tiene una fórmula escrita, para que todos lo calculen
+    igual.
+
+**Práctica: completar la ficha de KPIs.**
+
+| KPI | Fórmula | Pregunta que responde | Mejor si… |
+|----|----|----|----|
+| Prima emitida | Cuenta 51 | ¿Cuánto vende? | Sube |
+| Cuota de mercado | Prima de la aseguradora ÷ prima del sistema | ¿Qué tan grande es? | Sube |
+| Siniestralidad | Siniestros pagados (46) ÷ prima emitida (51) | ¿Qué parte de lo que cobra paga en siniestros? | Baja |
+| Solvencia | Patrimonio (3) ÷ activo (1) | ¿Cuánto de lo que tiene es propio? | Sube |
+
+``` sql
+CREATE OR REPLACE VIEW kpi.v_metricas AS
+SELECT f.tiempo_key,
+       f.institucion_key,
+       SUM(CASE WHEN c.cod_cuenta = '51' THEN f.valor_total END) AS prima_emitida,
+       SUM(CASE WHEN c.cod_cuenta = '46' THEN f.valor_total END) AS siniestros,
+       SUM(CASE WHEN c.cod_cuenta = '1'  THEN f.valor_total END) AS activo,
+       SUM(CASE WHEN c.cod_cuenta = '3'  THEN f.valor_total END) AS patrimonio
+FROM dw.fact_balance f
+JOIN dw.dim_cuenta c ON c.cuenta_key = f.cuenta_key
+WHERE c.cod_cuenta IN ('51', '46', '1', '3')
+GROUP BY f.tiempo_key, f.institucion_key;
+
+SELECT * FROM kpi.v_metricas WHERE tiempo_key = 202608 LIMIT 5;
+```
+
+**Indicadores clave**
+
+``` sql
+SELECT t.anio,
+       ROUND(SUM(m.prima_emitida) / 1000000, 1)                AS prima_millones,
+       ROUND(100 * SUM(m.siniestros) / SUM(m.prima_emitida), 1) AS siniestralidad_pct,
+       ROUND(100 * SUM(m.patrimonio) / SUM(m.activo), 1)        AS solvencia_pct
+FROM kpi.v_metricas m
+JOIN dw.dim_tiempo t ON t.tiempo_key = m.tiempo_key
+WHERE t.es_cierre_anio
+GROUP BY t.anio
+ORDER BY t.anio;
+```
