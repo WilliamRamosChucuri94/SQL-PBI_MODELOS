@@ -3068,7 +3068,7 @@ lectura para evitar modificaciones accidentales.
 **Práctica: completar la ficha de KPIs.**
 
 | KPI | Fórmula | Pregunta que responde | Mejor si… |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | Prima emitida | Cuenta 51 | ¿Cuánto vende? | Sube |
 | Cuota de mercado | Prima de la aseguradora ÷ prima del sistema | ¿Qué tan grande es? | Sube |
 | Siniestralidad | Siniestros pagados (46) ÷ prima emitida (51) | ¿Qué parte de lo que cobra paga en siniestros? | Baja |
@@ -3102,4 +3102,391 @@ JOIN dw.dim_tiempo t ON t.tiempo_key = m.tiempo_key
 WHERE t.es_cierre_anio
 GROUP BY t.anio
 ORDER BY t.anio;
+```
+
+### 5.1 Qué es un KPI?
+
+KPI significa Key Performance Indicator, o indicador clave de desempeño.
+
+Un KPI es una medida cuantificable que permite evaluar el desempeño de
+una organización frente a un objetivo definido.
+
+Microsoft distingue los KPI de otras métricas por su capacidad para
+mostrar el progreso respecto de una meta.
+
+**Ejemplo**
+
+Por ejemplo, una aseguradora puede registrar USD 120 millones de primas,
+pero ese valor por sí solo no permite determinar si la empresa está
+cumpliendo su objetivo comercial.
+
+Para convertirlo en un KPI necesitamos una meta, un período de medición
+y una interpretación.
+
+![**Interpretación:** la compañía alcanzó el 80 % del objetivo. Existe
+una brecha de USD 30 millones y un incumplimiento relativo del 20 %
+respecto de la meta.](images/clipboard-2419893204.png)
+
+### 5.2 Diferencia entre dato, métrica, indicador y KPI
+
+| Concepto | Qué representa | Ejemplo |
+|----|----|----|
+| Dato | Registro individual | Prima de USD 500.000 |
+| Métrica | Medida calculada o agregada | Primas totales de USD 120 M |
+| Indicador | Métrica interpretada dentro de un contexto | Crecimiento anual de primas: 8 % |
+| KPI | Indicador prioritario asociado a un objetivo | Cumplimiento de la meta: 80 % |
+
+### 5.3 Características de un buen KPI
+
+Para enseñar su construcción puede utilizarse el criterio **SMART**:
+
+-   Específico
+
+-   Medible
+
+-   Alcanzable
+
+-   Relevante
+
+-   Definido temporalmente.
+
+**Ejemplo de KPI insuficiente:**
+
+"Incrementar las primas".
+
+**Ejemplo de KPI bien formulado:**
+
+"Incrementar las primas emitidas un 10 % interanual al cierre de
+diciembre de 2026, manteniendo una siniestralidad dentro de la
+tolerancia aprobada".
+
+El segundo establece magnitud, plazo y una condición de desempeño
+complementaria. La meta del 10 % es ilustrativa.
+
+### 5.4 Ficha Técnica del Indicador
+
+| Campo        | Ejemplo                                      |
+|--------------|----------------------------------------------|
+| Nombre       | Crecimiento anual de primas                  |
+| Objetivo     | Evaluar la expansión comercial               |
+| Fórmula      | (Primas actuales / primas previas − 1) × 100 |
+| Unidad       | Porcentaje                                   |
+| Periodicidad | Mensual e interanual                         |
+| Fuente       | `dw.fact_balance`                            |
+| Dimensiones  | Tiempo, institución, tipo de seguro          |
+| Responsable  | Área de análisis financiero                  |
+| Meta         | 10 % anual, hipotética                       |
+| Validación   | Conciliación con estados financieros         |
+
+### 5.5 Métricas de negocio
+
+Las métricas describen dimensiones de la actividad empresarial: volumen,
+crecimiento, eficiencia, rentabilidad, liquidez y riesgo.
+
+Para nuestro ejemplo empleamos las siguientes cuentas del modelo de
+balances, sujetas a la validación del catálogo contable utilizado en el
+curso:
+
+-   Cuenta `51`: primas.
+
+-   Cuenta `46`: siniestros.
+
+-   Cuenta `1`: activos.
+
+-   Cuenta `3`: patrimonio.
+
+Es fundamental explicar que el código de una cuenta y su denominación no
+garantizan automáticamente que una métrica financiera esté correctamente
+definida. Debe revisarse si sus saldos son acumulados o periódicos, su
+nivel jerárquico y las reglas contables de agregación.
+
+### 5.6 Tablero comparativo de métricas
+
+| Métrica                  | Pregunta empresarial                            |
+|--------------------------|-------------------------------------------------|
+| Primas emitidas          | ¿Cuánto negocio generamos?                      |
+| Crecimiento interanual   | ¿Estamos expandiéndonos?                        |
+| Participación de mercado | ¿Cuál es nuestra posición competitiva?          |
+| Siniestralidad           | ¿Qué relación existe entre siniestros y primas? |
+| ROA                      | ¿Qué rentabilidad generan los activos?          |
+| ROE                      | ¿Qué rentabilidad recibe el capital contable?   |
+
+### 5.7 Indicadores clave y gestión de metas
+
+Aquí el estudiante debe comprender que una métrica puede cambiar de
+significado gerencial cuando se compara con una meta, un período base,
+un presupuesto o un umbral de riesgo.
+
+**Ejemplo interactivo: semaforización**
+
+Este ejemplo utiliza una regla didáctica: cumplimiento inferior al 80 %,
+crítico; desde 80 % hasta menos de 100 %, en seguimiento; desde 100 %,
+meta alcanzada. No corresponde a un umbral regulatorio.
+
+### 5.8 Modelos Analíticos
+
+En esta sección introducimos el concepto de modelo analítico como una
+estructura de datos y métodos que permite responder preguntas,
+identificar relaciones, estudiar comportamientos y apoyar decisiones.
+
+No debe confundirse el modelo de datos con el modelo estadístico: ambos
+forman parte del proceso analítico, pero cumplen funciones distintas.
+
+**Recordemos los niveles de analítica**
+
+![](images/clipboard-3850690038.png)
+
+## 6. Unidad 5: Dashboards ejecutivos
+
+### 6.1 Storytelling
+
+El storytelling es el proceso de construir una narrativa basada en
+evidencia para facilitar la comprensión y la toma de decisiones.
+
+No consiste en adornar los gráficos ni en persuadir ocultando resultados
+contradictorios. Consiste en organizar adecuadamente el contexto, la
+evidencia, las limitaciones y las implicaciones.
+
+### 6.2 Títulos descriptivos vs títulos analíticos
+
+Un error común consiste en colocar títulos como "Primas por año" o
+"Gráfico de siniestros".
+
+Un título analítico sintetiza el hallazgo.
+
+| Título descriptivo | Título analítico                                     |
+|--------------------|------------------------------------------------------|
+| Primas por año     | Las primas aumentaron 20 % interanual                |
+| Siniestros         | Los siniestros crecieron más rápido que las primas   |
+| Utilidad           | La utilidad disminuyó pese a la expansión comercial  |
+| Participación      | Cuatro instituciones concentran el mercado analizado |
+
+Los títulos analíticos deben actualizarse cuando cambian los filtros, el
+período o el resultado. Un encabezado fijo que contradice el gráfico
+filtrado puede inducir a error.
+
+### 6.3 Visualizaciones efectivas
+
+El objetivo de la visualización es minimizar el esfuerzo necesario para
+identificar un patrón, una diferencia o una anomalía.
+
+La elección del gráfico depende de la pregunta de negocio y de la
+estructura de las variables.
+
+-   **Líneas — Evolución temporal**
+
+Mostrar cómo cambian las primas o los indicadores durante varios
+períodos. Es especialmente útil para identificar tendencias y cambios de
+trayectoria.
+
+-   **Barras — Comparaciones**
+
+Comparar primas, siniestros o rentabilidad entre instituciones. Ordenar
+de mayor a menor facilita los rankings.
+
+-   **Composición — Participaciones**
+
+Mostrar cómo se distribuye un total entre pocos componentes. Para muchos
+elementos, es preferible utilizar barras.
+
+-   **Dispersión — Relaciones**
+
+Analizar la relación entre tamaño de las primas y siniestralidad por
+institución. Una asociación visual no equivale a causalidad.
+
+### 6.4 Buenas practicas de visualización
+
+-   Especificar unidades, moneda y período.
+
+-   Evitar el uso innecesario de gráficos tridimensionales.
+
+-   Mantener escalas comparables cuando se contrastan series.
+
+-   Evitar ejes truncados en gráficos de barras que distorsionen
+    diferencias.
+
+-   Utilizar colores de forma coherente y no depender únicamente del
+    color para transmitir estados.
+
+-   Ordenar categorías cuando resulte relevante.
+
+-   Limitar la cantidad de elementos simultáneos.
+
+-   Mostrar fuentes, fecha de actualización y definiciones.
+
+-   Presentar la incertidumbre cuando se utilizan pronósticos o
+    estimaciones.
+
+### 6.5 Publicación en Power BI
+
+Publicar un informe implica trasladar su contenido desde Power BI
+Desktop al servicio Power BI, donde puede administrarse y, dependiendo
+de las licencias y permisos, compartirse con otros usuarios.
+
+La publicación no es lo mismo que convertir el reporte en un enlace
+público.
+
+En Power BI Desktop:
+
+1.  Guardar el archivo `.pbix`.
+
+2.  Seleccionar Inicio → Publicar.
+
+3.  Iniciar sesión con una cuenta que tenga acceso al servicio.
+
+4.  Seleccionar el área de trabajo autorizada.
+
+5.  Confirmar la publicación.
+
+6.  Abrir el servicio Power BI y comprobar el informe y el modelo
+    semántico.
+
+La disponibilidad de áreas de trabajo, publicación y distribución
+depende de las licencias y de la configuración del administrador.
+
+### 6.6 Gobierno de datasets y modelos semánticos
+
+El gobierno de datos consiste en definir responsabilidades, criterios,
+controles y procesos para que la información sea confiable, segura,
+trazable y utilizada correctamente.
+
+En Power BI, el término actual habitual es modelo semántico (semantic
+model), aunque en documentación y prácticas anteriores se utiliza
+dataset.
+
+**¿Por qué es necesario el gobierno?**
+
+Supongamos que tres analistas calculan las primas del sector de maneras
+distintas:
+
+| Analista | Criterio empleado | Riesgo |
+|----|----|----|
+| A | Suma los saldos de la cuenta 51 | Puede mezclar niveles contables |
+| B | Suma cuenta 51 y subcuentas | Posible duplicación |
+| C | Utiliza la definición validada institucionalmente | Mayor consistencia y trazabilidad |
+
+El problema no se resuelve solamente creando gráficos más precisos. Es
+necesario establecer una definición institucional única de cada
+indicador y aplicar validaciones sistemáticas.
+
+**Componentes del gobierno**
+
+| Componente         | Control propuesto                                |
+|--------------------|--------------------------------------------------|
+| Propiedad del dato | Designar responsable funcional y técnico         |
+| Definiciones       | Diccionario de variables y KPI                   |
+| Calidad            | Controles de integridad, unicidad y consistencia |
+| Seguridad          | Accesos por rol y sensibilidad de información    |
+| Trazabilidad       | Origen, transformaciones y destinos              |
+| Actualización      | Frecuencia y seguimiento de errores              |
+| Versionamiento     | Controlar modificaciones al modelo               |
+| Documentación      | Mantener fórmulas y reglas de negocio            |
+| Certificación      | Validar qué modelos son oficiales                |
+
+**Seguridad mediante RLS**
+
+RLS (Row-Level Security) restringe las filas que determinados usuarios
+pueden consultar.
+
+Por ejemplo, si un dashboard financiero contiene información de varias
+unidades, puede limitarse a cada usuario a los registros de su unidad,
+siempre que el modelo y los roles estén configurados correctamente.
+
+Es importante comprender que RLS controla filas, no oculta objetos como
+columnas o medidas. Además, los permisos de administración del área de
+trabajo deben considerarse al definir la estrategia de seguridad.
+
+**Calidad y trazabilidad de los KPI**
+
+Cada KPI publicado debería disponer de:
+
+-   Una definición funcional aprobada.
+
+-   Fórmula de cálculo y reglas de agregación.
+
+-   Fuente y periodicidad de los datos.
+
+-   Dimensiones permitidas.
+
+-   Responsable del indicador.
+
+-   Controles de calidad.
+
+-   Política de accesos.
+
+-   Fecha de última validación.
+
+## Anexos fórmulas-Dax-M
+
+Agregar Fecha
+
+``` M
+#date([anio], [mes], 1)
+```
+
+Agregar Año
+
+``` M
+Date.Year([Fecha]))
+```
+
+Agregar Mes
+
+``` M
+Date.Month([Fecha]))
+```
+
+Agregar Mes con nombre
+
+``` M
+Date.MonthName([Fecha]))
+```
+
+Agregar Trimestre
+
+``` M
+Date.QuarterOfYear([Fecha]))
+```
+
+Agregar niveles
+
+``` M
+Text.Length([cod_cuenta]))
+```
+
+Conteo de Instituciones
+
+``` dax
+N_instituciones = DISTINCTCOUNT(
+    fact_balances[institucion])
+```
+
+Número de registros
+
+``` dax
+Número de registros = COUNT(fact_balances[institucion])
+```
+
+Total Activos
+
+``` dax
+Total_Activo = CALCULATE(
+                SUM(fact_balances[valor_total]), 
+                fact_balances[cod_cuenta]="1")/1000000
+```
+
+Total Pasivos
+
+``` dax
+Total_Pasivo = CALCULATE(
+                SUM(fact_balances[valor_total]), 
+                fact_balances[cod_cuenta]="2")/1000000
+```
+
+Total Patrimonio
+
+``` dax
+Total_Patrimonio = CALCULATE(
+                SUM(fact_balances[valor_total]), 
+                fact_balances[cod_cuenta]="3")/1000000
 ```
