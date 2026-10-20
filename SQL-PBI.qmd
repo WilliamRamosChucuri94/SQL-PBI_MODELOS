@@ -3130,7 +3130,7 @@ respecto de la meta.](images/clipboard-2419893204.png)
 ### 5.2 Diferencia entre dato, métrica, indicador y KPI
 
 | Concepto | Qué representa | Ejemplo |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | Dato | Registro individual | Prima de USD 500.000 |
 | Métrica | Medida calculada o agregada | Primas totales de USD 120 M |
 | Indicador | Métrica interpretada dentro de un contexto | Crecimiento anual de primas: 8 % |
@@ -3203,7 +3203,7 @@ nivel jerárquico y las reglas contables de agregación.
 ### 5.6 Tablero comparativo de métricas
 
 | Métrica                  | Pregunta empresarial                            |
-|--------------------------|-------------------------------------------------|
+|-------------------------|-----------------------------------------------|
 | Primas emitidas          | ¿Cuánto negocio generamos?                      |
 | Crecimiento interanual   | ¿Estamos expandiéndonos?                        |
 | Participación de mercado | ¿Cuál es nuestra posición competitiva?          |
@@ -3255,7 +3255,7 @@ Un error común consiste en colocar títulos como "Primas por año" o
 Un título analítico sintetiza el hallazgo.
 
 | Título descriptivo | Título analítico                                     |
-|--------------------|------------------------------------------------------|
+|--------------------|----------------------------------------------------|
 | Primas por año     | Las primas aumentaron 20 % interanual                |
 | Siniestros         | Los siniestros crecieron más rápido que las primas   |
 | Utilidad           | La utilidad disminuyó pese a la expansión comercial  |
@@ -3360,7 +3360,7 @@ Supongamos que tres analistas calculan las primas del sector de maneras
 distintas:
 
 | Analista | Criterio empleado | Riesgo |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | A | Suma los saldos de la cuenta 51 | Puede mezclar niveles contables |
 | B | Suma cuenta 51 y subcuentas | Posible duplicación |
 | C | Utiliza la definición validada institucionalmente | Mayor consistencia y trazabilidad |
@@ -3418,56 +3418,56 @@ Cada KPI publicado debería disponer de:
 
 ## Anexos fórmulas-Dax-M
 
-Agregar Fecha
+**Agregar Fecha**
 
-``` M
+``` m
 #date([anio], [mes], 1)
 ```
 
-Agregar Año
+**Agregar Año**
 
-``` M
+``` m
 Date.Year([Fecha]))
 ```
 
-Agregar Mes
+**Agregar Mes**
 
-``` M
+``` m
 Date.Month([Fecha]))
 ```
 
-Agregar Mes con nombre
+**Agregar Mes con nombre**
 
-``` M
+``` m
 Date.MonthName([Fecha]))
 ```
 
-Agregar Trimestre
+**Agregar Trimestre**
 
-``` M
+``` m
 Date.QuarterOfYear([Fecha]))
 ```
 
-Agregar niveles
+**Agregar niveles**
 
-``` M
+``` m
 Text.Length([cod_cuenta]))
 ```
 
-Conteo de Instituciones
+**Conteo de Instituciones**
 
 ``` dax
 N_instituciones = DISTINCTCOUNT(
     fact_balances[institucion])
 ```
 
-Número de registros
+**Número de registros**
 
 ``` dax
 Número de registros = COUNT(fact_balances[institucion])
 ```
 
-Total Activos
+**Total Activos**
 
 ``` dax
 Total_Activo = CALCULATE(
@@ -3475,7 +3475,7 @@ Total_Activo = CALCULATE(
                 fact_balances[cod_cuenta]="1")/1000000
 ```
 
-Total Pasivos
+**Total Pasivos**
 
 ``` dax
 Total_Pasivo = CALCULATE(
@@ -3483,10 +3483,207 @@ Total_Pasivo = CALCULATE(
                 fact_balances[cod_cuenta]="2")/1000000
 ```
 
-Total Patrimonio
+**Total Patrimonio**
 
-``` dax
+``` {.dax .cell-code}
 Total_Patrimonio = CALCULATE(
                 SUM(fact_balances[valor_total]), 
                 fact_balances[cod_cuenta]="3")/1000000
+```
+
+**Activo mes anterior**
+
+``` {.dax .dax .cell-code}
+Activo Mes Anterior =
+CALCULATE(
+    [Total_Activo];
+    DATEADD(
+        DimTiempo[Fecha];
+        -1;MONTH))
+```
+
+**Pasivo mes anterior**
+
+``` dax
+Pasivo Mes Anterior =
+CALCULATE(
+    [Total_Pasivo];
+    DATEADD(
+        DimTiempo[Fecha];
+        -1;MONTH))
+```
+
+**Patrimonio mes anterior**
+
+``` dax
+Patrimonio Mes Anterior =
+CALCULATE(
+    [Total_Patrimonio];
+    DATEADD(
+        DimTiempo[Fecha];
+        -1;MONTH))
+```
+
+**Crecimiento Activo**
+
+``` dax
+Crecimiento Activo% =
+VAR ActivoActual= [Total_Activo]
+VAR ActivoAnterior=[Activo Mes Anterior]
+RETURN
+    DIVIDE(
+        ActivoActual-ActivoAnterior;
+        ActivoAnterior)
+```
+
+**Crecimiento Pasivo**
+
+``` dax
+Crecimiento Pasivo% =
+VAR PasivoActual= [Total_Pasivo]
+VAR PasivoAnterior=[Pasivo Mes Anterior]
+RETURN
+    DIVIDE(
+        PasivoActual-PasivoAnterior;
+        PasivoAnterior)
+```
+
+**Crecimiento Patrimonio**
+
+``` dax
+Crecimiento Patrimonio% =
+VAR PatrimonioActual= [Total_Patrimonio]
+VAR PatrimonioAnterior=[Patrimonio Mes Anterior]
+RETURN
+    DIVIDE(
+        PatrimonioActual-PatrimonioAnterior;
+        PatrimonioAnterior)
+```
+
+**Crear tabla para indicadores**
+
+``` dax
+Selector Indicador =
+DATATABLE(
+    "Indicador"; STRING;
+    {
+        {"Liquidez"};
+        {"Solvencia"};
+        {"Endeudamiento"}
+    }
+)
+```
+
+**Índice de Liquidez**
+
+``` dax
+Índice de Liquidez = DIVIDE([Total_Activo];[Total_Pasivo])
+```
+
+**Índice de Solvencia**
+
+``` dax
+Índice de Solvencia = DIVIDE([Total_Patrimonio]; [Total_Activo])
+```
+
+**Índice de Endeudamiento**
+
+``` dax
+Índice de Endeudamiento = DIVIDE([Total_Pasivo];[Total_Activo])
+```
+
+**Índicador Seleccionado**
+
+``` dax
+Valor indicador seleccionado =
+VAR IndicadorSeleccionado=
+    SELECTEDVALUE('Selector Indicador'[Indicador];
+    "Liquidez")
+ 
+RETURN
+    SWITCH(
+        IndicadorSeleccionado;
+        "Liquidez"; [Índice de Liquidez];
+        "Solvencia";[Índice de Solvencia];
+        "Endeudamiento";[Índice de Endeudamiento];
+        BLANK()
+    )
+```
+
+**Cálculo de percentil 0,25**
+
+``` dax
+Percentil25_1 =
+VAR PeriodoSeleccionados=
+    CALCULATETABLE(
+        VALUES(DimTiempo[Fecha]);
+        ALLSELECTED(DimTiempo))
+ 
+VAR TablaPercentil=
+    ADDCOLUMNS(
+        PeriodoSeleccionados;
+        "@ValorIndicador";
+        CALCULATE(
+            [Valor indicador seleccionado]))
+ 
+RETURN
+    PERCENTILEX.INC(
+    FILTER(
+        TablaPercentil;
+        NOT ISBLANK([@ValorIndicador])
+        );
+        [@ValorIndicador];
+        0,25)
+```
+
+**Cálculo de percentil 0,50**
+
+``` dax
+Percentil50_1 =
+VAR PeriodoSeleccionados=
+    CALCULATETABLE(
+        VALUES(DimTiempo[Fecha]);
+        ALLSELECTED(DimTiempo))
+ 
+VAR TablaPercentil=
+    ADDCOLUMNS(
+        PeriodoSeleccionados;
+        "@ValorIndicador";
+        CALCULATE(
+            [Valor indicador seleccionado]))
+ 
+RETURN
+    PERCENTILEX.INC(
+    FILTER(
+        TablaPercentil;
+        NOT ISBLANK([@ValorIndicador])
+        );
+        [@ValorIndicador];
+        0,50)
+```
+
+**Cálculo de percentil 0,75**
+
+``` dax
+Percentil75_1 =
+VAR PeriodoSeleccionados=
+    CALCULATETABLE(
+        VALUES(DimTiempo[Fecha]);
+        ALLSELECTED(DimTiempo))
+ 
+VAR TablaPercentil=
+    ADDCOLUMNS(
+        PeriodoSeleccionados;
+        "@ValorIndicador";
+        CALCULATE(
+            [Valor indicador seleccionado]))
+ 
+RETURN
+    PERCENTILEX.INC(
+    FILTER(
+        TablaPercentil;
+        NOT ISBLANK([@ValorIndicador])
+        );
+        [@ValorIndicador];
+        0,75)
 ```
